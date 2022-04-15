@@ -19,19 +19,22 @@ DCMotor m1, m2;
 Servo s1, s2;
 
 // i2c slave address
-// switch this below to use a different address
-#if 1
 const uint8_t i2c_addr = 0x4C;
-#else
-const uint8_t i2c_addr = 0x5A;
-#endif
 
 // declaration of handler
 void cmd_handler(int count);
+void req_handler();
 
-// msg format
-const char header = '<';
-const uint8_t msg_len = 5; // including header
+// registers
+const uint8_t ping_reg = 0x2C;
+const uint8_t cmd_reg =  0x3C;
+const uint8_t cmd_len = 5; // including header
+
+// responses
+const uint8_t ack = 0x31;
+const uint8_t nack = 0x17;
+
+uint8_t curr_reg;
 
 void setup() {
     // setup motors
@@ -44,35 +47,46 @@ void setup() {
     // begin i2c
     Wire.begin(i2c_addr);
     Wire.onReceive(cmd_handler);
+    Wire.onRequest(req_handler);
 }
 
 void loop() {}
 
 void cmd_handler(int count) {
 
-    if (Wire.read() != header || count < msg_len) {
+    curr_reg = Wire.read();
+
+    if (curr_reg == cmd_reg) {
         // if msg doesn't start with header or msg len is less,
         // then it is an invalid msg, discard it
-        while(Wire.available())
-            Wire.read();
+
+        if (count < cmd_len)
+            return;
+        
+        // read raw data from I2C
+        int8_t rm1_speed = Wire.read();
+        int8_t rm2_speed = Wire.read();
+        int8_t rs1_angle = Wire.read();
+        int8_t rs2_angle = Wire.read();
+
+        // post-processing
+        int m1_speed = (int)rm1_speed * 2;
+        int m2_speed = (int)rm2_speed * 2;
+        int s1_angle = (int)rs1_angle;
+        int s2_angle = (int)rs2_angle;
+
+        // write to actuators
+        m1.write(m1_speed);
+        m2.write(m2_speed);
+        s1.write(s1_angle);
+        s2.write(s2_angle);
+    }
+}
+
+void req_handler() {
+    if (curr_reg == ping_reg) {
+        Wire.write(ack);
         return;
     }
-
-    // read raw data from I2C
-    int8_t rm1_speed = Wire.read();
-    int8_t rm2_speed = Wire.read();
-    int8_t rs1_angle = Wire.read();
-    int8_t rs2_angle = Wire.read();
-
-    // post-processing
-    int m1_speed = rm1_speed * 2;
-    int m2_speed = rm2_speed * 2;
-    int s1_angle = rs1_angle;
-    int s2_angle = rs2_angle;
-
-    // write to actuators
-    m1.write(m1_speed);
-    m2.write(m2_speed);
-    s1.write(s1_angle);
-    s2.write(s2_angle);
+    Wire.write(nack);
 }
