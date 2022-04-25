@@ -6,13 +6,13 @@
 #include "DCMotor.h"
 
 // pins
-const uint8_t motor1_pwm_pin = 9;
-const uint8_t motor1_dir_pin = 8;
-const uint8_t motor2_pwm_pin = 10;
-const uint8_t motor2_dir_pin = 11;
+const uint8_t motor1_pwm_pin = 5;
+const uint8_t motor1_dir_pin = 7;
+const uint8_t motor2_pwm_pin = 6;
+const uint8_t motor2_dir_pin = 8;
 
-const uint8_t servo1_pin = 5;
-const uint8_t servo2_pin = 6;
+const uint8_t servo1_pin = 9;
+const uint8_t servo2_pin = 10;
 
 // objects
 DCMotor m1, m2;
@@ -42,7 +42,7 @@ void setup() {
     m2.attach(motor2_pwm_pin, motor2_dir_pin);
     
     s1.attach(servo1_pin);
-    s1.attach(servo2_pin);
+    s2.attach(servo2_pin);
 
     // begin i2c
     Wire.begin(i2c_addr);
@@ -72,8 +72,8 @@ void cmd_handler(int count) {
         // post-processing
         int m1_speed = (int)rm1_speed * 2;
         int m2_speed = (int)rm2_speed * 2;
-        int s1_angle = (int)rs1_angle;
-        int s2_angle = (int)rs2_angle;
+        int s1_angle = 90 + (int)rs1_angle;
+        int s2_angle = 90 + (int)rs2_angle;
 
         // write to actuators
         m1.write(m1_speed);

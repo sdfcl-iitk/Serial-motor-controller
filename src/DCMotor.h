@@ -4,13 +4,11 @@
 class DCMotor {
     private:
         uint8_t pwm_pin, dir_pin;
-        bool reverse;
 
     public:
-        void attach(const uint8_t pwm_pin, const uint8_t dir_pin, const bool reverse = false) {
+        void attach(const uint8_t pwm_pin, const uint8_t dir_pin) {
             this->pwm_pin = pwm_pin;
             this->dir_pin = dir_pin;
-            this->reverse = reverse;
 
             pinMode(pwm_pin, OUTPUT);
             pinMode(dir_pin, OUTPUT);
@@ -25,8 +23,8 @@ class DCMotor {
             /* Speed is a pwm between -255 to 255. Sign indicates direction */
             speed = constrain(speed, -255, 255);
 
-            uint8_t pwm = abs(speed);
-            bool dir = (speed >= 0) ^ reverse;
+            int pwm = abs(speed);
+            bool dir = (speed >= 0);
 
             // write to hardware
             analogWrite(pwm_pin, pwm);
