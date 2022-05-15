@@ -1,16 +1,8 @@
-# i2c-motor-controller
-Tiny I2C controller to control 2 DC motors and 2 servos. It is mainly used to reduce wiring and computational complexity for the host controller.
+# Serial-motor-controller
+Tiny serial controller to control 2 DC motors and 2 servos. It is mainly used to reduce wiring and computational complexity for the host controller.
 
 ## Wiring
-This PlatformIO project has been tested on an Arduino Nano ATMega328P. On this board, the SDA pin is A4 and the SCL pin is A5. Connect these pins to the I2C bus and also make the ground common.
-
-| Arduino Nano | I2C Bus |
-| --- | --- |
-| A4 | SDA |
-| A5 | SCL |
-| GND | GND |
-
-The motors and servos are connected as follows (this can be changed in the code):
+This PlatformIO project has been tested on an Arduino Nano ATMega328P. The motors and servos are connected as follows (this can be changed in the code):
 
 | Device | Arduino Nano Pin |
 | --- | --- |
@@ -21,15 +13,13 @@ The motors and servos are connected as follows (this can be changed in the code)
 | Servo1 | D5 |
 | Servo2 | D6 |
 
-## Connecting and accessing registers
-By default, the device is accessible at address 0x4C. This can be changed in the code. The device has 2 registers - 0x2C and 0x3C. 0x2C is the ping register and 0x3C is the command register. You can read a byte from the ping register - if it returns 0x31 (ACK), then it means the device is properly connected. In case of any error, it return 0x17 (NACK). To control the connected motors and servos, send a 4-byte packet to the command register as shown below.
-
 ## Packet format
-To control the motors and servos, transmit a 4-byte packet to register 0x3C in this format:
+Multiple serial motor controllers can be used together. To help distinguish between multiple controllers, each controller can be set an id in the `dev_id` variable. The controllers support 2 commands - a ping command, and a write command. The ping command returns the device id and the write command can be used to control the motors. To get the device id, send the byte `0x2C` to the serial port (baud rate 115200). It should return the device id (1 byte). To control the motors and servos, transmit a 5-byte packet to the serial port in this format:
 
-| Motor1 PWM | Motor2 PWM | Servo1 Angle | Servo2 Angle |
-| --- | --- | --- | --- |
+| Write Command | Motor1 PWM | Motor2 PWM | Servo1 Angle | Servo2 Angle |
+| --- | --- | --- | --- | --- |
 
+- Write Command is the fixed byte `0x3C`.
 - Motor1 PWM is half of the real pwm. The sign indicates the direction. For example, if we want the motor to spin with 100 pwm in reverse, transmit -50.
 - Motor2 PWM is same as Motor1 PWM.
 - Servo1 Angle is the servo angle in degrees.
